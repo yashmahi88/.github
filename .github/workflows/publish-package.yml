@@ -3,16 +3,10 @@ name: Publish Package
 on:
   workflow_call:
     inputs:
-      nexus_username:
+      project_key:
         required: true
         type: string
-      nexus_password:
-        required: true
-        type: string
-      nexus_api_key:
-        required: true
-        type: string
-      sonar_token:
+      project_name:
         required: true
         type: string
 
@@ -125,19 +119,18 @@ jobs:
 
       - name: Build and analyze
         env:
-          GITHUB_TOKEN: ${{ inputs.github_token }}  
-          SONAR_TOKEN: ${{ inputs.sonar_token }}   
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   
         shell: powershell
         run: |
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"yashmahi88_nexus-git" /o:"yashmahi0404" /d:sonar.token="${{ inputs.sonar_token }}" /d:sonar.host.url="https://sonarcloud.io"
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"${{ inputs.project_key }}" /o:"${{ inputs.project_name }}" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
           dotnet build
-          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ inputs.sonar_token }}"
+          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: Check Quality Gate
         run: |
             sleep 5  
-            PROJECT_KEY="yashmahi88_nexus-git"  
-            QUALITY_GATE_STATUS=$(curl -s -H "Authorization: Bearer ${{ secrets.SONAR_TOKEN }}" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${PROJECT_KEY}")           
+            QUALITY_GATE_STATUS=$(curl -s -H "Authorization: Bearer ${{ secrets.SONAR_TOKEN }}" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ inputs.project_key }}")           
             echo "Quality Gate Status Response: $QUALITY_GATE_STATUS"           
             PROJECT_STATUS=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.status')            
             ALL_CONDITIONS_OK=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.conditions | all(.status == "OK")')
