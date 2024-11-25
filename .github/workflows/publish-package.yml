@@ -85,15 +85,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2 
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: 17
           distribution: 'zulu'
-
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Cache SonarQube Cloud packages
         uses: actions/cache@v4
@@ -123,7 +120,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   
         shell: powershell
         run: |
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"${{ inputs.project_key }}" /o:"${{ inputs.project_name }}" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"${{ vars.PROJECT_KEY }}" /o:"${{ vars.PROJECT_NAME }}" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
           dotnet build
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
