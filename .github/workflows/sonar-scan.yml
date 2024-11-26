@@ -2,6 +2,13 @@ name: Sonar Scan
 
 on:
   workflow_call:
+    inputs:
+      project_key:
+        required: true
+        type: string
+      project_name:
+        required: true
+        type: string
 
 jobs:
   sonar_scan:
