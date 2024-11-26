@@ -1,4 +1,4 @@
-name: Sonar Scan
+name: Push To Nexus
 
 on:
   workflow_call:
