@@ -1,11 +1,7 @@
 name: Sonar Scan
 
 on:
-  workflow_run:
-    workflows:
-      - Publish Package
-    types:
-      - completed   
+  workflow_call:
 
 jobs:
   sonar_scan:
