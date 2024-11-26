@@ -1,0 +1,58 @@
+name: Sonar Scan
+
+on:
+  workflow_call:
+
+jobs:
+  push_to_nexus_tag:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    environment: nexus-approval
+    steps:
+      - name: Download Package Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: nuget-package
+          path: ./bin/Release
+
+      - name: List files in Release directory
+        run: ls -al ./bin/Release
+
+      - name: Push to Nexus Repository (Tag)
+        env:
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          NEXUS_API_KEY: ${{ secrets.NEXUS_API_KEY }}
+          NEXUS_TAG_SOURCE: ${{ vars.NEXUS_TAG_SOURCE }}
+        run: |
+          echo "Pushing to Nexus repository for tag: $NEXUS_TAG_SOURCE"
+          dotnet nuget push ./bin/Release/*.nupkg --source $NEXUS_TAG_SOURCE --api-key $NEXUS_API_KEY
+
+  push_to_nexus_branch:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/release'
+    steps:
+      - name: Download Package Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: nuget-package
+          path: ./bin/Release
+
+      - name: List files in Release directory
+        run: ls -al ./bin/Release
+
+      - name: Push to Nexus Repository (Branch)
+        env:
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          NEXUS_API_KEY: ${{ secrets.NEXUS_API_KEY }}
+          NEXUS_DEV_SOURCE: ${{ vars.NEXUS_DEV_SOURCE }}
+          NEXUS_RELEASE_SOURCE: ${{ vars.NEXUS_RELEASE_SOURCE }}
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
+            NEXUS_SOURCE=$NEXUS_DEV_SOURCE
+          elif [[ "${GITHUB_REF}" == "refs/heads/release" ]]; then
+            NEXUS_SOURCE=$NEXUS_RELEASE_SOURCE
+          fi
+          echo "Pushing to Nexus repository: $NEXUS_SOURCE"
+          dotnet nuget push ./bin/Release/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
