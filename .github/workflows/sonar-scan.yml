@@ -1,0 +1,68 @@
+name: Sonar Scan
+
+on:
+  workflow_run:
+    workflows:
+      - Publish Package
+    types:
+      - completed   
+
+jobs:
+  sonar_scan:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'zulu'
+
+      - name: Cache SonarQube Cloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~\sonar\cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Cache SonarQube Cloud scanner
+        id: cache-sonar-scanner
+        uses: actions/cache@v4
+        with:
+          path: .\.sonar\scanner
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
+
+      - name: Install SonarQube Cloud scanner
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        shell: powershell
+        run: |
+          New-Item -Path .\.sonar\scanner -ItemType Directory
+          dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
+
+      - name: Build and analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: powershell
+        run: |
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"${{ vars.PROJECT_KEY }}" /o:"${{ vars.PROJECT_NAME }}" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
+          dotnet build
+          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
+      - name: Check Quality Gate
+        run: |
+          sleep 5  
+          QUALITY_GATE_STATUS=$(curl -s -H "Authorization: Bearer ${{ secrets.SONAR_TOKEN }}" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ inputs.project_key }}")           
+          echo "Quality Gate Status Response: $QUALITY_GATE_STATUS"           
+          PROJECT_STATUS=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.status')            
+          ALL_CONDITIONS_OK=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.conditions | all(.status == "OK")')
+          if [[ "$PROJECT_STATUS" != "OK" || "$ALL_CONDITIONS_OK" != "true" ]]; then
+            echo "Quality Gate failed. Stopping the workflow."
+            exit 1
+          else
+            echo "Quality Gate passed."
+          fi
+        shell: bash
