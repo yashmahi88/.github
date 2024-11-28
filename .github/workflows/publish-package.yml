@@ -1,65 +1,40 @@
-name: Publish Package
+name: Package and Upload
 
 on:
   workflow_call:
-    # inputs:
-    #   project_key:
-    #     required: true
-    #     type: string
-    #   project_name:
-    #     required: true
-    #     type: string
+    inputs:
+      LANGUAGE:
+        description: "Programming Language to Package"
+        required: true
+        type: string
 
 jobs:
-  build:
+  package:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2  
+        uses: actions/checkout@v2
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v2
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
         with:
-          dotnet-version: '8.0.x'
+          name: build-artifact
+          path: ./downloaded-artifacts
 
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build project
-        run: dotnet build --configuration Release
-
-      - name: Set package name and version 
-        id: set_name
+      - name: Verify contents of downloaded artifact
         run: |
-          echo "Checking GITHUB_REF: $GITHUB_REF"
-          FOLDER_NAME="nexus-git-development"
+          echo "Listing contents of downloaded artifacts:"
+          ls -R ./downloaded-artifacts
+          cat ./downloaded-artifacts/package_info.txt
 
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            TAG_NAME="${GITHUB_REF#refs/tags/}"
+      - name: Extract PACKAGE_ID and PACKAGE_VERSION
+        run: |
+          PACKAGE_ID=$(grep "PACKAGE_ID:" ./downloaded-artifacts/package_info.txt | cut -d ':' -f2 | xargs)
+          PACKAGE_VERSION=$(grep "PACKAGE_VERSION:" ./downloaded-artifacts/package_info.txt | cut -d ':' -f2 | xargs)
 
-            git fetch origin master
-            MASTER_COMMIT=$(git rev-parse origin/master)
-
-            TAG_COMMIT=$(git rev-parse "${GITHUB_REF}")
-
-            if [[ "$TAG_COMMIT" == "$MASTER_COMMIT" ]]; then
-              export PACKAGE_ID="nexus-git-${TAG_NAME}"
-              export PACKAGE_VERSION="${TAG_NAME}"
-            else
-              echo "Error: Tags must be created on the master branch."
-              exit 1
-            fi
-          elif [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
-            export PACKAGE_ID="${FOLDER_NAME}.nexus-git"
-            export PACKAGE_VERSION="1.0.0-${GITHUB_RUN_ID}"
-          elif [[ "${GITHUB_REF}" == "refs/heads/release" ]]; then
-            COMMIT_ID=$(echo "${GITHUB_SHA}" | cut -c1-6)
-            export PACKAGE_ID="nexus-git-1.0.0-release-${COMMIT_ID}"
-            export PACKAGE_VERSION="1.0.0-release-${COMMIT_ID}"
-          elif [[ "${GITHUB_REF}" == "refs/heads/master" ]]; then
-            exit 1
-          fi 
+          echo "PACKAGE_ID=${PACKAGE_ID}"
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}"
 
           echo "PACKAGE_ID=${PACKAGE_ID}" >> $GITHUB_ENV
           echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
@@ -67,10 +42,39 @@ jobs:
       - name: Pack project
         run: |
           echo "Packaging with version: $PACKAGE_VERSION"
-          dotnet pack --configuration Release --output ./bin/Release \
-            /p:CustomPackageId=$PACKAGE_ID \
-            /p:PackageVersion=$PACKAGE_VERSION
-          ARTIFACT_PATH="./bin/Release/${PACKAGE_ID}.${PACKAGE_VERSION}.nupkg"
+          if [[ "${{ inputs.LANGUAGE }}" == "dotnet" ]]; then
+            dotnet pack --configuration Release --output ./bin/Release /p:CustomPackageId=$PACKAGE_ID /p:PackageVersion=$PACKAGE_VERSION
+            ARTIFACT_PATH="./bin/Release/${PACKAGE_ID}.${PACKAGE_VERSION}.nupkg"
+          elif [[ "${{ inputs.LANGUAGE }}" == "java" ]]; then
+            mvn package \
+              -Dpackage.id=${{ env.PACKAGE_ID }} \
+              -Dpackage.version=${{ env.PACKAGE_VERSION }}
+            ARTIFACT_PATH="./target/${PACKAGE_ID}-${PACKAGE_VERSION}.jar"
+          elif [[ "${{ inputs.LANGUAGE }}" == "react" || "${{ inputs.LANGUAGE }}" == "node" ]]; then
+            node -e "
+              const fs = require('fs');
+              const path = require('path');
+              const packageJsonPath = path.join(process.cwd(), 'package.json');
+              const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+              packageJson.name = process.env.PACKAGE_ID || 'default-package-id';
+              packageJson.version = process.env.PACKAGE_VERSION || '0.1.0';
+              fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+              console.log('Updated package.json with name:', packageJson.name, 'and version:', packageJson.version);
+            "
+
+            if [[ "${{ inputs.LANGUAGE }}" == "react" ]]; then
+              npm run build
+              sync
+              sleep 10
+              mkdir -p temp_build_dir
+              cp -r build/* temp_build_dir/
+              tar --ignore-failed-read -czvf "./build/${PACKAGE_ID}-${PACKAGE_VERSION}.tar.gz" -C temp_build_dir .
+              ARTIFACT_PATH="./build/${PACKAGE_ID}-${PACKAGE_VERSION}.tar.gz"
+            else
+              npm pack
+              ARTIFACT_PATH="./${PACKAGE_ID}-${PACKAGE_VERSION}.tgz"
+            fi
+          fi
           echo "ARTIFACT_PATH=${ARTIFACT_PATH}" >> $GITHUB_ENV
 
       - name: Upload Package as Artifact
@@ -78,115 +82,3 @@ jobs:
         with:
           name: nuget-package
           path: ${{ env.ARTIFACT_PATH }}
-
-  # sonar_scan:
-  #   runs-on: windows-latest
-  #   needs: build  
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v2 
-
-  #     - name: Set up JDK 17
-  #       uses: actions/setup-java@v4
-  #       with:
-  #         java-version: 17
-  #         distribution: 'zulu'
-
-  #     - name: Cache SonarQube Cloud packages
-  #       uses: actions/cache@v4
-  #       with:
-  #         path: ~\sonar\cache
-  #         key: ${{ runner.os }}-sonar
-  #         restore-keys: ${{ runner.os }}-sonar
-
-  #     - name: Cache SonarQube Cloud scanner
-  #       id: cache-sonar-scanner
-  #       uses: actions/cache@v4
-  #       with:
-  #         path: .\.sonar\scanner
-  #         key: ${{ runner.os }}-sonar-scanner
-  #         restore-keys: ${{ runner.os }}-sonar-scanner
-
-  #     - name: Install SonarQube Cloud scanner
-  #       if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
-  #       shell: powershell
-  #       run: |
-  #         New-Item -Path .\.sonar\scanner -ItemType Directory
-  #         dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
-
-  #     - name: Build and analyze
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   
-  #       shell: powershell
-  #       run: |
-  #         .\.sonar\scanner\dotnet-sonarscanner begin /k:"${{ vars.PROJECT_KEY }}" /o:"${{ vars.PROJECT_NAME }}" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
-  #         dotnet build
-  #         .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
-
-  #     - name: Check Quality Gate
-  #       run: |
-  #           sleep 5  
-  #           QUALITY_GATE_STATUS=$(curl -s -H "Authorization: Bearer ${{ secrets.SONAR_TOKEN }}" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ inputs.project_key }}")           
-  #           echo "Quality Gate Status Response: $QUALITY_GATE_STATUS"           
-  #           PROJECT_STATUS=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.status')            
-  #           ALL_CONDITIONS_OK=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.conditions | all(.status == "OK")')
-  #           if [[ "$PROJECT_STATUS" != "OK" || "$ALL_CONDITIONS_OK" != "true" ]]; then
-  #             echo "Quality Gate failed. Stopping the workflow."
-  #             exit 1
-  #           else
-  #             echo "Quality Gate passed."
-  #           fi
-  #       shell: bash
-
-  # push_to_nexus_tag:
-  #   runs-on: ubuntu-latest
-  #   needs: sonar_scan
-  #   if: startsWith(github.ref, 'refs/tags/')
-  #   environment: nexus-approval
-  #   steps:
-  #     - name: Download Package Artifact
-  #       uses: actions/download-artifact@v3
-  #       with:
-  #         name: nuget-package
-  #         path: ./bin/Release
-
-  #     - name: List files in Release directory
-  #       run: ls -al ./bin/Release
-
-  #     - name: Push to Nexus Repository (Tag)
-  #       env:
-  #         NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-  #         NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-  #         NEXUS_API_KEY: ${{ secrets.NEXUS_API_KEY }}
-  #       run: |
-  #         echo "Pushing to Nexus repository for tag: http://52.187.94.85:8081/repository/nuget-tag"
-  #         dotnet nuget push ./bin/Release/*.nupkg --source http://52.187.94.85:8081/repository/nuget-tag --api-key $NEXUS_API_KEY
-
-  # push_to_nexus_branch:
-  #   runs-on: ubuntu-latest
-  #   needs: sonar_scan
-  #   if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/release'
-  #   steps:
-  #     - name: Download Package Artifact
-  #       uses: actions/download-artifact@v3
-  #       with:
-  #         name: nuget-package
-  #         path: ./bin/Release
-
-  #     - name: List files in Release directory
-  #       run: ls -al ./bin/Release
-
-  #     - name: Push to Nexus Repository (Branch)
-  #       env:
-  #         NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-  #         NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-  #         NEXUS_API_KEY: ${{ secrets.NEXUS_API_KEY }}
-  #       run: |
-  #         if [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
-  #           NEXUS_SOURCE="http://52.187.94.85:8081/repository/nuget-snapshot"
-  #         elif [[ "${GITHUB_REF}" == "refs/heads/release" ]]; then
-  #           NEXUS_SOURCE="http://52.187.94.85:8081/repository/nuget-rc"
-  #         fi
-  #         echo "Pushing to Nexus repository: $NEXUS_SOURCE"
-  #         dotnet nuget push ./bin/Release/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
