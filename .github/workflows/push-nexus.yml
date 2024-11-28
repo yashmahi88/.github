@@ -27,9 +27,7 @@ jobs:
         with:
           name: nuget-package
           path: ~/artifact
-      - name: Check dotnet version
-        run: dotnet --version
-
+          
       - name: List files in the artifact directory
         run: ls -al ~/artifact
 
