@@ -5,22 +5,16 @@ on:
     secrets:
       NEXUS_USERNAME:
         required: true
-        
       NEXUS_PASSWORD:
         required: true
-        
       NEXUS_API_KEY:
         required: true
-        
       NEXUS_DEV_SOURCE:
         required: true
-        
       NEXUS_RELEASE_SOURCE:
         required: true
-        
       NEXUS_TAG_SOURCE:
         required: true
-         
 
 jobs:
   push_to_nexus_tag:
