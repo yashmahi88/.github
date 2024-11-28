@@ -2,25 +2,25 @@ name: Push To Nexus
 
 on:
   workflow_call:
-    inputs:
+    secrets:
       NEXUS_USERNAME:
         required: true
-        type: string
+        
       NEXUS_PASSWORD:
         required: true
-        type: string
+        
       NEXUS_API_KEY:
         required: true
-        type: string
+        
       NEXUS_DEV_SOURCE:
         required: true
-        type: string
+        
       NEXUS_RELEASE_SOURCE:
         required: true
-        type: string
+        
       NEXUS_TAG_SOURCE:
         required: true
-        type: string
+        
 
 jobs:
   push_to_nexus_tag:
