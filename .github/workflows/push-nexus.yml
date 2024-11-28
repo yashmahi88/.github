@@ -2,6 +2,25 @@ name: Push To Nexus
 
 on:
   workflow_call:
+    inputs:
+      NEXUS_USERNAME:
+        required: true
+        type: string
+      NEXUS_PASSWORD:
+        required: true
+        type: string
+      NEXUS_API_KEY:
+        required: true
+        type: string
+      NEXUS_DEV_SOURCE:
+        required: true
+        type: string
+      NEXUS_RELEASE_SOURCE:
+        required: true
+        type: string
+      NEXUS_TAG_SOURCE:
+        required: true
+        type: string
 
 jobs:
   push_to_nexus_tag:
@@ -13,10 +32,10 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: nuget-package
-          path: ./bin/Release
+          path: ~/artifact  
 
-      - name: List files in Release directory
-        run: ls -al ./bin/Release
+      - name: List files in the artifact directory
+        run: ls -al ~/artifact  
 
       - name: Push to Nexus Repository (Tag)
         env:
@@ -26,7 +45,7 @@ jobs:
           NEXUS_TAG_SOURCE: ${{ vars.NEXUS_TAG_SOURCE }}
         run: |
           echo "Pushing to Nexus repository for tag: $NEXUS_TAG_SOURCE"
-          dotnet nuget push ./bin/Release/*.nupkg --source $NEXUS_TAG_SOURCE --api-key $NEXUS_API_KEY
+          dotnet nuget push ~/artifact/* --source $NEXUS_TAG_SOURCE --api-key $NEXUS_API_KEY  # Pushing all files from the artifact directory
 
   push_to_nexus_branch:
     runs-on: ubuntu-latest
@@ -36,10 +55,10 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: nuget-package
-          path: ./bin/Release
+          path: ~/artifact  
 
-      - name: List files in Release directory
-        run: ls -al ./bin/Release
+      - name: List files in the artifact directory
+        run: ls -al ~/artifact  
 
       - name: Push to Nexus Repository (Branch)
         env:
@@ -55,4 +74,4 @@ jobs:
             NEXUS_SOURCE=$NEXUS_RELEASE_SOURCE
           fi
           echo "Pushing to Nexus repository: $NEXUS_SOURCE"
-          dotnet nuget push ./bin/Release/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
+          dotnet nuget push ~/artifact/* --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY 
