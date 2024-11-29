@@ -38,7 +38,7 @@ jobs:
       - name: List files in artifact directory
         run: |
             pwd 
-            ls -al ~/artifact/*.jar
+            ls -al ~/artifact/
 
       - name: Push to Nexus Repository (Tag)
         env:
