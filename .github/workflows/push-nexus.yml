@@ -3,18 +3,18 @@ name: Push To Nexus
 on:
   workflow_call:
     secrets:
-      NEXUS_USERNAME:
-        required: true
-      NEXUS_PASSWORD:
-        required: true
-      NEXUS_API_KEY:
-        required: true
-      NEXUS_DEV_SOURCE:
-        required: true
-      NEXUS_RELEASE_SOURCE:
-        required: true
-      NEXUS_TAG_SOURCE:
-        required: true
+        NEXUS_USERNAME:
+          required: true
+        NEXUS_PASSWORD:
+          required: true
+        NEXUS_API_KEY:
+          required: true
+        NEXUS_DEV_SOURCE:
+          required: true
+        NEXUS_RELEASE_SOURCE:
+          required: true
+        NEXUS_TAG_SOURCE:
+          required: true
 
 jobs:
   push_to_nexus_tag:
@@ -27,19 +27,22 @@ jobs:
         with:
           name: nuget-package
           path: ~/artifact
-          
-      - name: List files in the artifact directory
+
+      - name: List files in Release directory
         run: ls -al ~/artifact
 
       - name: Push to Nexus Repository (Tag)
         env:
-          NEXUS_USERNAME: ${{ inputs.NEXUS_USERNAME }}
-          NEXUS_PASSWORD: ${{ inputs.NEXUS_PASSWORD }}
-          NEXUS_API_KEY: ${{ inputs.NEXUS_API_KEY }}
-          NEXUS_TAG_SOURCE: ${{ inputs.NEXUS_TAG_SOURCE }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          NEXUS_API_KEY: ${{ secrets.NEXUS_API_KEY }}
+          NEXUS_TAG_SOURCE: ${{ vars.NEXUS_TAG_SOURCE }}
         run: |
           echo "Pushing to Nexus repository for tag: $NEXUS_TAG_SOURCE"
-          dotnet nuget push ~/artifact/* --source $NEXUS_TAG_SOURCE --api-key $NEXUS_API_KEY
+          for file in ~/artifact/*; do
+            echo "Pushing file: $file"
+            curl -u $NEXUS_USERNAME:$NEXUS_PASSWORD --upload-file $file $NEXUS_TAG_SOURCE
+          done
 
   push_to_nexus_branch:
     runs-on: ubuntu-latest
@@ -51,16 +54,16 @@ jobs:
           name: nuget-package
           path: ~/artifact
 
-      - name: List files in the artifact directory
+      - name: List files in Release directory
         run: ls -al ~/artifact
 
       - name: Push to Nexus Repository (Branch)
         env:
-          NEXUS_USERNAME: ${{ inputs.NEXUS_USERNAME }}
-          NEXUS_PASSWORD: ${{ inputs.NEXUS_PASSWORD }}
-          NEXUS_API_KEY: ${{ inputs.NEXUS_API_KEY }}
-          NEXUS_DEV_SOURCE: ${{ inputs.NEXUS_DEV_SOURCE }}
-          NEXUS_RELEASE_SOURCE: ${{ inputs.NEXUS_RELEASE_SOURCE }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          NEXUS_API_KEY: ${{ secrets.NEXUS_API_KEY }}
+          NEXUS_DEV_SOURCE: ${{ vars.NEXUS_DEV_SOURCE }}
+          NEXUS_RELEASE_SOURCE: ${{ vars.NEXUS_RELEASE_SOURCE }}
         run: |
           if [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
             NEXUS_SOURCE=$NEXUS_DEV_SOURCE
@@ -68,4 +71,7 @@ jobs:
             NEXUS_SOURCE=$NEXUS_RELEASE_SOURCE
           fi
           echo "Pushing to Nexus repository: $NEXUS_SOURCE"
-          dotnet nuget push ~/artifact/* --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
+          for file in ~/artifact/*; do
+            echo "Pushing file: $file"
+            curl -u $NEXUS_USERNAME:$NEXUS_PASSWORD --upload-file $file $NEXUS_SOURCE
+          done
