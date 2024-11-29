@@ -32,6 +32,8 @@ jobs:
         with:
           name: nuget-package
           path: ~/artifact
+      - name: Checkout code
+        uses: actions/checkout@v2
 
       - name: List files in artifact directory
         run: |
