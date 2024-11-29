@@ -105,7 +105,7 @@ jobs:
           elif [[ "$LANGUAGE" == "node" ]]; then
             # For Node, use npm publish
             echo "Using npm to publish the package"
-            npm publish ${{ github.workspace }}/artifact*.tgz --registry $NEXUS_SOURCE --user $NEXUS_USERNAME --password $NEXUS_PASSWORD
+            npm publish ${{ github.workspace }}/artifact/*.tgz --registry $NEXUS_SOURCE --user $NEXUS_USERNAME --password $NEXUS_PASSWORD
           else
             echo "Unsupported language $LANGUAGE"
             exit 1
