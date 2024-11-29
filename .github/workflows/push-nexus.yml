@@ -31,14 +31,14 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: nuget-package
-          path: ~/artifact
+          path: ${{ github.workspace }}/artifact
       - name: Checkout code
         uses: actions/checkout@v2
 
       - name: List files in artifact directory
         run: |
             pwd 
-            ls -al ~/artifact/
+            ls -al ${{ github.workspace }}/artifact/
 
       - name: Push to Nexus Repository (Tag)
         env:
@@ -52,15 +52,15 @@ jobs:
           if [[ "$LANGUAGE" == "java" ]]; then
             # For Java, use mvn deploy
             echo "Using Maven to deploy the package"
-            mvn deploy:deploy-file -Dfile=./artifact/*.jar -DgroupId=com.example -DartifactId=nexus-git -Dversion=1.0.0 -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
+            mvn deploy:deploy-file -Dfile=${{ github.workspace }}/artifact/*.jar -DgroupId=com.example -DartifactId=nexus-git -Dversion=1.0.0 -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
           elif [[ "$LANGUAGE" == "dotnet" ]]; then
             # For .NET, use dotnet push
             echo "Using .NET to push the package"
-            dotnet nuget push ~/artifact/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
+            dotnet nuget push ${{ github.workspace }}/artifact/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
           elif [[ "$LANGUAGE" == "node" ]]; then
             # For Node, use npm publish
             echo "Using npm to publish the package"
-            npm publish ~/artifact --registry $NEXUS_SOURCE --user $NEXUS_USERNAME --password $NEXUS_PASSWORD
+            npm publish ${{ github.workspace }}/artifact --registry $NEXUS_SOURCE --user $NEXUS_USERNAME --password $NEXUS_PASSWORD
           else
             echo "Unsupported language $LANGUAGE"
             exit 1
@@ -97,15 +97,15 @@ jobs:
           if [[ "$LANGUAGE" == "java" ]]; then
             # For Java, use mvn deploy
             echo "Using Maven to deploy the package"
-             mvn clean package deploy:deploy-file -Dfile=./artifact/*.jar -DgroupId=com.example -DartifactId=nexus-git -Dversion=1.0.0 -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
+             mvn clean package deploy:deploy-file -Dfile=${{ github.workspace }}/artifact/*.jar -DgroupId=com.example -DartifactId=nexus-git -Dversion=1.0.0 -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
           elif [[ "$LANGUAGE" == "dotnet" ]]; then
             # For .NET, use dotnet push
             echo "Using .NET to push the package"
-            dotnet nuget push ~/artifact/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
+            dotnet nuget push ${{ github.workspace }}/artifact/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
           elif [[ "$LANGUAGE" == "node" ]]; then
             # For Node, use npm publish
             echo "Using npm to publish the package"
-            npm publish ~/artifact --registry $NEXUS_SOURCE --user $NEXUS_USERNAME --password $NEXUS_PASSWORD
+            npm publish ${{ github.workspace }}/artifact --registry $NEXUS_SOURCE --user $NEXUS_USERNAME --password $NEXUS_PASSWORD
           else
             echo "Unsupported language $LANGUAGE"
             exit 1
