@@ -69,15 +69,18 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/release'
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
       - name: Download Package Artifact
         uses: actions/download-artifact@v3
         with:
           name: nuget-package
-          path: ${{ github.workspace }}/artifact
+          path: ./artifact
 
 
       - name: List files in artifact directory
-        run: ls -al ${{ github.workspace }}/artifact/
+        run: ls -al ./artifact/
 
       - name: Push to Nexus Repository (Branch)
         env:
@@ -105,7 +108,7 @@ jobs:
           elif [[ "$LANGUAGE" == "node" ]]; then
             # For Node, use npm publish
             echo "Using npm to publish the package"
-            npm publish ${{ github.workspace }}/artifact/*.tgz --registry $NEXUS_SOURCE --user $NEXUS_USERNAME --password $NEXUS_PASSWORD
+            npm publish ./artifact/*.tgz --registry $NEXUS_SOURCE --user $NEXUS_USERNAME --password $NEXUS_PASSWORD
           else
             echo "Unsupported language $LANGUAGE"
             exit 1
