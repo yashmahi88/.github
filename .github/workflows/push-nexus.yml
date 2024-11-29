@@ -2,6 +2,11 @@ name: Push To Nexus
 
 on:
   workflow_call:
+    inputs:
+      LANGUAGE:
+        description: 'Programming language of the package'
+        required: true
+        type: string
     secrets:
       NEXUS_USERNAME:
         required: true
@@ -34,13 +39,25 @@ jobs:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
           NEXUS_SOURCE: ${{ secrets.NEXUS_TAG_SOURCE }}
+          LANGUAGE: ${{ inputs.LANGUAGE }}
         run: |
           echo "Pushing to Nexus repository for tag."
-          for file in ~/artifact/*; do
-            echo "Pushing file: $file"
-            wget --method=PUT --user="$NEXUS_USERNAME" --password="$NEXUS_PASSWORD" \
-              --body-file="$file" "$NEXUS_SOURCE/$(basename "$file")"
-          done
+          if [[ "$LANGUAGE" == "java" ]]; then
+            # For Java, use mvn deploy
+            echo "Using Maven to deploy the package"
+            mvn deploy:deploy-file -Dfile=~/artifact/*.jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
+          elif [[ "$LANGUAGE" == "dotnet" ]]; then
+            # For .NET, use dotnet push
+            echo "Using .NET to push the package"
+            dotnet nuget push ~/artifact/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
+          elif [[ "$LANGUAGE" == "node" ]]; then
+            # For Node, use npm publish
+            echo "Using npm to publish the package"
+            npm publish ~/artifact --registry $NEXUS_SOURCE --user $NEXUS_USERNAME --password $NEXUS_PASSWORD
+          else
+            echo "Unsupported language $LANGUAGE"
+            exit 1
+          fi
 
   push_to_nexus_branch:
     runs-on: ubuntu-latest
@@ -61,6 +78,7 @@ jobs:
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
           NEXUS_DEV_SOURCE: ${{ secrets.NEXUS_DEV_SOURCE }}
           NEXUS_RELEASE_SOURCE: ${{ secrets.NEXUS_RELEASE_SOURCE }}
+          LANGUAGE: ${{ inputs.LANGUAGE }}
         run: |
           if [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
             NEXUS_SOURCE=$NEXUS_DEV_SOURCE
@@ -68,8 +86,19 @@ jobs:
             NEXUS_SOURCE=$NEXUS_RELEASE_SOURCE
           fi
           echo "Pushing to Nexus repository: $NEXUS_SOURCE"
-          for file in ~/artifact/*; do
-            echo "Pushing file: $file"
-            wget --method=PUT --user="$NEXUS_USERNAME" --password="$NEXUS_PASSWORD" \
-              --body-file="$file" "$NEXUS_SOURCE/$(basename "$file")"
-          done
+          if [[ "$LANGUAGE" == "java" ]]; then
+            # For Java, use mvn deploy
+            echo "Using Maven to deploy the package"
+            mvn deploy:deploy-file -Dfile=~/artifact/*.jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
+          elif [[ "$LANGUAGE" == "dotnet" ]]; then
+            # For .NET, use dotnet push
+            echo "Using .NET to push the package"
+            dotnet nuget push ~/artifact/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
+          elif [[ "$LANGUAGE" == "node" ]]; then
+            # For Node, use npm publish
+            echo "Using npm to publish the package"
+            npm publish ~/artifact --registry $NEXUS_SOURCE --user $NEXUS_USERNAME --password $NEXUS_PASSWORD
+          else
+            echo "Unsupported language $LANGUAGE"
+            exit 1
+          fi
