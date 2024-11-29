@@ -16,6 +16,8 @@ on:
         required: true
       NEXUS_RELEASE_SOURCE:
         required: true
+      NEXUS_API_KEY:
+        required: true
       NEXUS_TAG_SOURCE:
         required: true
 
