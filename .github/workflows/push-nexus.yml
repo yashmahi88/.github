@@ -45,6 +45,7 @@ jobs:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
           NEXUS_SOURCE: ${{ secrets.NEXUS_TAG_SOURCE }}
+          NEXUS_API_KEY: ${{secrets.NEXUS_API_KEY }}
           LANGUAGE: ${{ inputs.LANGUAGE }}
         run: |
           echo "Pushing to Nexus repository for tag."
@@ -84,6 +85,7 @@ jobs:
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
           NEXUS_DEV_SOURCE: ${{ secrets.NEXUS_DEV_SOURCE }}
           NEXUS_RELEASE_SOURCE: ${{ secrets.NEXUS_RELEASE_SOURCE }}
+          NEXUS_API_KEY: ${{secrets.NEXUS_API_KEY }}
           LANGUAGE: ${{ inputs.LANGUAGE }}
         run: |
           if [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
