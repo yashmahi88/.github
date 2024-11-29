@@ -74,7 +74,9 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: nuget-package
-          path: ./artifact
+          path: ${{ github.workspace }}/artifact
+      - name: Checkout code
+        uses: actions/checkout@v2
 
       - name: List files in artifact directory
         run: ls -al ./artifact/
