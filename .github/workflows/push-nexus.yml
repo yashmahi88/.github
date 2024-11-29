@@ -7,8 +7,6 @@ on:
         required: true
       NEXUS_PASSWORD:
         required: true
-      NEXUS_API_KEY:
-        required: true
       NEXUS_DEV_SOURCE:
         required: true
       NEXUS_RELEASE_SOURCE:
@@ -35,12 +33,13 @@ jobs:
         env:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-          NEXUS_TAG_SOURCE: ${{ secrets.NEXUS_TAG_SOURCE }}
+          NEXUS_SOURCE: ${{ secrets.NEXUS_TAG_SOURCE }}
         run: |
-          echo "Pushing to Nexus repository for tag: $NEXUS_TAG_SOURCE"
+          echo "Pushing to Nexus repository for tag."
           for file in ~/artifact/*; do
             echo "Pushing file: $file"
-            curl -u "$NEXUS_USERNAME:$NEXUS_PASSWORD" --upload-file "$file" "$NEXUS_TAG_SOURCE"
+            wget --method=PUT --user="$NEXUS_USERNAME" --password="$NEXUS_PASSWORD" \
+              --body-file="$file" "$NEXUS_SOURCE/$(basename "$file")"
           done
 
   push_to_nexus_branch:
@@ -64,12 +63,13 @@ jobs:
           NEXUS_RELEASE_SOURCE: ${{ secrets.NEXUS_RELEASE_SOURCE }}
         run: |
           if [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
-            NEXUS_SOURCE="${NEXUS_DEV_SOURCE}"
+            NEXUS_SOURCE=$NEXUS_DEV_SOURCE
           elif [[ "${GITHUB_REF}" == "refs/heads/release" ]]; then
-            NEXUS_SOURCE="${NEXUS_RELEASE_SOURCE}"
+            NEXUS_SOURCE=$NEXUS_RELEASE_SOURCE
           fi
           echo "Pushing to Nexus repository: $NEXUS_SOURCE"
           for file in ~/artifact/*; do
             echo "Pushing file: $file"
-            curl -u "$NEXUS_USERNAME:$NEXUS_PASSWORD" --upload-file "$file" "$NEXUS_SOURCE"
+            wget --method=PUT --user="$NEXUS_USERNAME" --password="$NEXUS_PASSWORD" \
+              --body-file="$file" "$NEXUS_SOURCE/$(basename "$file")"
           done
