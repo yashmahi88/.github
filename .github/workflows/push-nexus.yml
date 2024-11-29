@@ -76,7 +76,7 @@ jobs:
           path: ./artifact
 
       - name: List files in artifact directory
-        run: ls -al ./artifact/*.jar
+        run: ls -al ./artifact/
 
       - name: Push to Nexus Repository (Branch)
         env:
