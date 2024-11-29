@@ -97,7 +97,7 @@ jobs:
           if [[ "$LANGUAGE" == "java" ]]; then
             # For Java, use mvn deploy
             echo "Using Maven to deploy the package"
-             mvn clean package deploy:deploy-file -Dfile=${{ github.workspace }}/artifact/*.jar -DgroupId=com.example -DartifactId=nexus-git -Dversion=1.0.0 -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
+             mvn deploy:deploy-file -Dfile=${{ github.workspace }}/artifact/*.jar -DgroupId=com.example -DartifactId=nexus-git -Dversion=1.0.0 -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
           elif [[ "$LANGUAGE" == "dotnet" ]]; then
             # For .NET, use dotnet push
             echo "Using .NET to push the package"
