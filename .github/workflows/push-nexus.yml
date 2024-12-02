@@ -33,33 +33,32 @@ jobs:
           name: nuget-package
           path: ${{ github.workspace }}/artifact
 
-
       - name: List files in artifact directory
         run: |
-            pwd 
-            ls -al ${{ github.workspace }}/artifact/
+          pwd 
+          ls -al ${{ github.workspace }}/artifact/
 
-      - name: Push to Nexus Repository (Tag)
+      - name: Login to Nexus Repository
         env:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
           NEXUS_SOURCE: ${{ secrets.NEXUS_TAG_SOURCE }}
-          NEXUS_API_KEY: ${{secrets.NEXUS_API_KEY }}
+        run: |
+          echo "Logging in to Nexus..."
+          echo "//${{ secrets.NEXUS_TAG_SOURCE }}/:_auth=$(echo -n \"$NEXUS_USERNAME:$NEXUS_PASSWORD\" | base64)" >> ~/.npmrc
+          echo "registry=http://${{ secrets.NEXUS_TAG_SOURCE }}" >> ~/.npmrc
+
+      - name: Push to Nexus Repository (Tag)
+        env:
           LANGUAGE: ${{ inputs.LANGUAGE }}
         run: |
           echo "Pushing to Nexus repository for tag."
           if [[ "$LANGUAGE" == "java" ]]; then
-            # For Java, use mvn deploy
-            echo "Using Maven to deploy the package"
             mvn deploy:deploy-file -Dfile=${{ github.workspace }}/artifact/*.jar -DgroupId=com.example -DartifactId=nexus-git -Dversion=1.0.0 -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
           elif [[ "$LANGUAGE" == "dotnet" ]]; then
-            # For .NET, use dotnet push
-            echo "Using .NET to push the package"
             dotnet nuget push ${{ github.workspace }}/artifact/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
           elif [[ "$LANGUAGE" == "node" ]]; then
-            # For Node, use npm publish
-            echo "Using npm to publish the package"
-            npm publish ${{ github.workspace }}/artifact --registry $NEXUS_SOURCE --user $NEXUS_USERNAME --password $NEXUS_PASSWORD
+            npm publish ${{ github.workspace }}/artifact/*.tgz --registry $NEXUS_SOURCE
           else
             echo "Unsupported language $LANGUAGE"
             exit 1
@@ -78,17 +77,22 @@ jobs:
           name: nuget-package
           path: ./artifact
 
-
       - name: List files in artifact directory
         run: ls -al ./artifact/
 
-      - name: Push to Nexus Repository (Branch)
+      - name: Login to Nexus Repository
         env:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+        run: |
+          echo "Logging in to Nexus..."
+          echo "//${{ secrets.NEXUS_DEV_SOURCE }}/:_auth=$(echo -n \"$NEXUS_USERNAME:$NEXUS_PASSWORD\" | base64)" >> ~/.npmrc
+          echo "registry=http://${{ secrets.NEXUS_DEV_SOURCE }}" >> ~/.npmrc
+
+      - name: Push to Nexus Repository (Branch)
+        env:
           NEXUS_DEV_SOURCE: ${{ secrets.NEXUS_DEV_SOURCE }}
           NEXUS_RELEASE_SOURCE: ${{ secrets.NEXUS_RELEASE_SOURCE }}
-          NEXUS_API_KEY: ${{secrets.NEXUS_API_KEY }}
           LANGUAGE: ${{ inputs.LANGUAGE }}
         run: |
           if [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
@@ -98,17 +102,11 @@ jobs:
           fi
           echo "Pushing to Nexus repository: $NEXUS_SOURCE"
           if [[ "$LANGUAGE" == "java" ]]; then
-            # For Java, use mvn deploy
-            echo "Using Maven to deploy the package"
-             mvn deploy:deploy-file -Dfile=${{ github.workspace }}/artifact/*.jar -DgroupId=com.example -DartifactId=nexus-git -Dversion=1.0.0 -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
+            mvn deploy:deploy-file -Dfile=./artifact/*.jar -DgroupId=com.example -DartifactId=nexus-git -Dversion=1.0.0 -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
           elif [[ "$LANGUAGE" == "dotnet" ]]; then
-            # For .NET, use dotnet push
-            echo "Using .NET to push the package"
-            dotnet nuget push ${{ github.workspace }}/artifact/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
+            dotnet nuget push ./artifact/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
           elif [[ "$LANGUAGE" == "node" ]]; then
-            # For Node, use npm publish
-            echo "Using npm to publish the package"
-            npm publish ${{ github.workspace }}/artifact/*.tgz --registry $NEXUS_SOURCE 
+            npm publish ./artifact/*.tgz --registry $NEXUS_SOURCE
           else
             echo "Unsupported language $LANGUAGE"
             exit 1
