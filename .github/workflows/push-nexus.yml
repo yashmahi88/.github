@@ -87,9 +87,9 @@ jobs:
           NEXUS_SOURCE: ${{ secrets.NEXUS_DEV_SOURCE }}
         run: |
           echo "Logging in to Nexus..."
-          echo "registry=https://${{ env.NEXUS_SOURCE }}" >> ~/.npmrc
+          echo "registry=${{ env.NEXUS_SOURCE }}" >> ~/.npmrc
           echo "always-auth=true" >> ~/.npmrc
-          npm adduser --registry=https://${{ env.NEXUS_SOURCE }} <<EOF
+          npm adduser --registry=${{ env.NEXUS_SOURCE }} <<EOF
           ${NEXUS_USERNAME}
           ${NEXUS_PASSWORD}
           mahiyash0404@gmail.com
