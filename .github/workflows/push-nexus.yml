@@ -89,6 +89,8 @@ jobs:
           echo "//${{ secrets.NEXUS_DEV_SOURCE }}/:_auth=$(echo -n \"$NEXUS_USERNAME:$NEXUS_PASSWORD\" | base64)" >> ~/.npmrc
           echo "registry=http://${{ secrets.NEXUS_DEV_SOURCE }}" >> ~/.npmrc
           echo "always-auth=true" >> ~/.npmrc
+      - name: Debug .npmrc
+        run: cat ~/.npmrc
 
       - name: Push to Nexus Repository (Branch)
         env:
