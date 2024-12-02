@@ -89,11 +89,8 @@ jobs:
           echo "Logging in to Nexus..."
           echo "registry=${{ env.NEXUS_SOURCE }}" >> ~/.npmrc
           echo "always-auth=true" >> ~/.npmrc
-          npm adduser --registry=${{ env.NEXUS_SOURCE }} <<EOF
-          ${NEXUS_USERNAME}
-          ${NEXUS_PASSWORD}
-          mahiyash0404@gmail.com
-          EOF
+          echo -e "${NEXUS_USERNAME}\n${NEXUS_PASSWORD}\nmahiyash0404@gmail.com" | npm adduser --registry=${{ env.NEXUS_SOURCE }}
+      
       
       - name: Debug .npmrc
         run: cat ~/.npmrc
