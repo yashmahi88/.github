@@ -80,9 +80,6 @@ jobs:
       - name: List files in artifact directory
         run: ls -al ./artifact/
 
-      - name: Install Npm CLI
-        run: npm install -g npm-cli-login
-
       - name: Login to Nexus Repository
         env:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
@@ -93,6 +90,7 @@ jobs:
             echo "//${{ secrets.NEXUS_DEV_SOURCE }}/:_auth=$(echo -n \"$NEXUS_USERNAME:$NEXUS_PASSWORD\" | base64)" >> ~/.npmrc
             echo "registry=http://${{ secrets.NEXUS_DEV_SOURCE }}" >> ~/.npmrc
             echo "always-auth=true" >> ~/.npmrc
+            npm adduser --registry=${{ secrets.NEXUS_DEV_SOURCE}} --always-auth --username=$NEXUS_USERNAME --password=$NEXUS_PASSWORD --email=mahiyash0404@gmail.com
        
       
       - name: Debug .npmrc
