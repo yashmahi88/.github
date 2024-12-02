@@ -20,6 +20,8 @@ on:
         required: true
       NEXUS_TAG_SOURCE:
         required: true
+      NPM_TOKEN:
+        required: true
 
 jobs:
   push_to_nexus_tag:
@@ -80,22 +82,15 @@ jobs:
       - name: List files in artifact directory
         run: ls -al ./artifact/
 
-      - name: Login to Nexus Repository
+      - name: Setup npm authentication for Nexus
         env:
-          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-          NEXUS_SOURCE: ${{ secrets.NEXUS_DEV_SOURCE }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-            echo "Logging in to Nexus..."
-            echo "//${{ secrets.NEXUS_DEV_SOURCE }}/:_authToken=${{ secrets.NEXUS_PASSWORD }}" >> ~/.npmrc
-            echo "registry=http://${{ secrets.NEXUS_DEV_SOURCE }}" >> ~/.npmrc
-            echo "always-auth=true" >> ~/.npmrc
-            #npm adduser --registry=${{ secrets.NEXUS_DEV_SOURCE}} --always-auth --username=${{ secrets.NEXUS_USERNAME }} --password=${{ secrets.NEXUS_PASSWORD }} --email=mahiyash0404@gmail.com
-            npm adduser --registry=http://52.187.94.85:8081/repository/nuget-snapshot <<!
-            ${{ secrets.NEXUS_USERNAME }}
-            ${{ secrets.NEXUS_PASSWORD }}
-            mahiyash0404@gmail.com
-            !
+          echo "Logging in to Nexus..."
+          echo "//52.187.94.85:8081/repository/npm-snapshot/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
+          echo "//52.187.94.85:8081/repository/npm-rc/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
+          echo "//52.187.94.85:8081/repository/npm-tag/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
       
       - name: Debug .npmrc
         run: cat ~/.npmrc
