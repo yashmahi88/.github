@@ -90,7 +90,7 @@ jobs:
             echo "//${{ secrets.NEXUS_DEV_SOURCE }}/:_auth=$(echo -n \"$NEXUS_USERNAME:$NEXUS_PASSWORD\" | base64)" >> ~/.npmrc
             echo "registry=http://${{ secrets.NEXUS_DEV_SOURCE }}" >> ~/.npmrc
             echo "always-auth=true" >> ~/.npmrc
-            npm adduser --registry=${{ secrets.NEXUS_DEV_SOURCE}} --always-auth --username=$NEXUS_USERNAME --password=$NEXUS_PASSWORD --email=mahiyash0404@gmail.com
+            npm adduser --registry=${{ secrets.NEXUS_DEV_SOURCE}} --always-auth --username=${{ secrets.NEXUS_USERNAME }} --password=${{ secrets.NEXUS_PASSWORD }} --email=mahiyash0404@gmail.com
        
       
       - name: Debug .npmrc
