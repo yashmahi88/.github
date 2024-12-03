@@ -107,9 +107,14 @@ jobs:
         run: |
           if [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
             NEXUS_SOURCE=$NEXUS_DEV_SOURCE
+            echo "NEXUS_SOURCE=$NEXUS_DEV_SOURCE" >> $GITHUB_ENV
           elif [[ "${GITHUB_REF}" == "refs/heads/release" ]]; then
             NEXUS_SOURCE=$NEXUS_RELEASE_SOURCE
+            echo "NEXUS_SOURCE=$NEXUS_RELEASE_SOURCE" >> $GITHUB_ENV
           fi
+          echo "export NEXUS_USERNAME=${{ secrets.NEXUS_USERNAME }}" >> $GITHUB_ENV
+          echo "export NEXUS_PASSWORD=${{ secrets.NEXUS_PASSWORD }}" >> $GITHUB_ENV
+
           echo "Pushing to Nexus repository: $NEXUS_SOURCE"
           if [[ "$LANGUAGE" == "java" ]]; then
             mvn deploy:deploy-file -Dfile=./artifact/*.jar -DgroupId=com.example -DartifactId=${{ env.PACKAGE_ID }} -Dversion=${{ env.PACKAGE_VERSION }} -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=${{ secrets.NEXUS_USERNAME }} -Dpassword=${{ secrets.NEXUS_PASSWORD }}
