@@ -90,7 +90,7 @@ jobs:
             echo "//52.187.94.85:8081/repository/npm-snapshot/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
             echo "Using NPM_TOKEN for development"
           elif [[ "${GITHUB_REF}" == "refs/heads/release" ]]; then
-            echo "//52.187.94.85:8081/repository/npm-release/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
+            echo "//52.187.94.85:8081/repository/npm-rc/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
             echo "Using NPM_TOKEN for release"
           fi
       
