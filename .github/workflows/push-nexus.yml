@@ -54,7 +54,7 @@ jobs:
         run: |
           echo "Pushing to Nexus repository for tag."
           if [[ "$LANGUAGE" == "java" ]]; then
-            mvn deploy:deploy-file -Dfile=${{ github.workspace }}/artifact/*.jar -DgroupId=com.example -DartifactId=nexus-git -Dversion=1.0.0 -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
+            mvn deploy:deploy-file -Dfile=./artifact/*.jar -DgroupId=com.example -DartifactId=${{ env.PACKAGE_ID }} -Dversion=${{ env.PACKAGE_VERSION }} -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=${{ secrets.NEXUS_USERNAME }} -Dpassword=${{ secrets.NEXUS_PASSWORD }}          
           elif [[ "$LANGUAGE" == "dotnet" ]]; then
             dotnet nuget push ${{ github.workspace }}/artifact/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
           elif [[ "$LANGUAGE" == "node" ]]; then
@@ -112,7 +112,7 @@ jobs:
           fi
           echo "Pushing to Nexus repository: $NEXUS_SOURCE"
           if [[ "$LANGUAGE" == "java" ]]; then
-            mvn deploy:deploy-file -Dfile=./artifact/*.jar -DgroupId=com.example -DartifactId=nexus-git -Dversion=1.0.0 -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
+            mvn deploy:deploy-file -Dfile=./artifact/*.jar -DgroupId=com.example -DartifactId=${{ env.PACKAGE_ID }} -Dversion=${{ env.PACKAGE_VERSION }} -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=${{ secrets.NEXUS_USERNAME }} -Dpassword=${{ secrets.NEXUS_PASSWORD }}
           elif [[ "$LANGUAGE" == "dotnet" ]]; then
             dotnet nuget push ./artifact/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
           elif [[ "$LANGUAGE" == "node" ]]; then
