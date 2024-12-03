@@ -43,10 +43,9 @@ jobs:
       - name: Login to Nexus Repository
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NEXUS_SOURCE: ${{ secrets.NEXUS_TAG_SOURCE }}
         run: |
           echo "Logging in to Nexus..."
-          echo "//${{ secrets.NEXUS_TAG_SOURCE }}/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+          echo "//52.187.94.85:8081/repository/npm-tag/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
           echo "always-auth=true" >> ~/.npmrc
 
       - name: Push to Nexus Repository (Tag)
@@ -84,16 +83,14 @@ jobs:
       - name: Setup npm authentication for Nexus
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NEXUS_DEV_SOURCE: ${{ secrets.NEXUS_DEV_SOURCE }}
-          NEXUS_RELEASE_SOURCE: ${{ secrets.NEXUS_RELEASE_SOURCE }}
         run: |
           echo "Logging in to Nexus..."          
           
           if [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
-            echo "//${NEXUS_DEV_SOURCE}:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+            echo "//52.187.94.85:8081/repository/npm-snapshot/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
             echo "Using NPM_TOKEN for development"
           elif [[ "${GITHUB_REF}" == "refs/heads/release" ]]; then
-            echo "//${NEXUS_RELEASE_SOURCE}:_authToken=${NPM_TOKEN }" >> ~/.npmrc
+            echo "//52.187.94.85:8081/repository/npm-snapshot/:_authToken=${NPM_TOKEN }" >> ~/.npmrc
             echo "Using NPM_TOKEN for release"
           fi
       
