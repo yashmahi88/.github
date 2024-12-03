@@ -114,4 +114,4 @@ jobs:
             exit 1
           } else {
             Write-Host "Quality Gate passed."
-          }
+          } 
