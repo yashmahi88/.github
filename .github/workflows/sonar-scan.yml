@@ -21,17 +21,8 @@ on:
 
 jobs:
   sonarcloud:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-        include:
-          - os: ubuntu-latest
-            LANGUAGE-group: node-react
-          - os: ubuntu-latest
-            LANGUAGE-group: java
-          - os: windows-latest
-            LANGUAGE-group: dotnet
+    runs-on: ${{ inputs.LANGUAGE == 'dotnet' && 'windows-latest' || 'ubuntu-latest' }}
+    
 
     steps:
       - uses: actions/checkout@v4
