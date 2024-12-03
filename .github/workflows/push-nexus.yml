@@ -42,13 +42,12 @@ jobs:
 
       - name: Login to Nexus Repository
         env:
-          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NEXUS_SOURCE: ${{ secrets.NEXUS_TAG_SOURCE }}
         run: |
           echo "Logging in to Nexus..."
-          echo "//${{ secrets.NEXUS_TAG_SOURCE }}/:_auth=$(echo -n \"$NEXUS_USERNAME:$NEXUS_PASSWORD\" | base64)" >> ~/.npmrc
-          echo "registry=http://${{ secrets.NEXUS_TAG_SOURCE }}" >> ~/.npmrc
+          echo "//${{ secrets.NEXUS_TAG_SOURCE }}/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
 
       - name: Push to Nexus Repository (Tag)
         env:
@@ -60,7 +59,7 @@ jobs:
           elif [[ "$LANGUAGE" == "dotnet" ]]; then
             dotnet nuget push ${{ github.workspace }}/artifact/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
           elif [[ "$LANGUAGE" == "node" ]]; then
-            npm publish ${{ github.workspace }}/artifact/*.tgz --registry $NEXUS_SOURCE
+            npm publish ./artifact/*.tgz --registry $NEXUS_SOURCE
           else
             echo "Unsupported language $LANGUAGE"
             exit 1
@@ -85,11 +84,19 @@ jobs:
       - name: Setup npm authentication for Nexus
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NEXUS_DEV_SOURCE: ${{ secrets.NEXUS_DEV_SOURCE }}
+          NEXUS_RELEASE_SOURCE: ${{ secrets.NEXUS_RELEASE_SOURCE }}
         run: |
-          echo "Logging in to Nexus..."
-          echo "//52.187.94.85:8081/repository/npm-snapshot/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
-          echo "//52.187.94.85:8081/repository/npm-rc/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
-          echo "//52.187.94.85:8081/repository/npm-tag/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
+          echo "Logging in to Nexus..."          
+          
+          if [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
+            echo "//${NEXUS_DEV_SOURCE}:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+            echo "Using NPM_TOKEN for development"
+          elif [[ "${GITHUB_REF}" == "refs/heads/release" ]]; then
+            echo "//${NEXUS_RELEASE_SOURCE}:_authToken=${NPM_TOKEN }" >> ~/.npmrc
+            echo "Using NPM_TOKEN for release"
+          fi
+      
           echo "always-auth=true" >> ~/.npmrc
       
       - name: Debug .npmrc
