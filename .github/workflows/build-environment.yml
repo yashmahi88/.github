@@ -60,7 +60,7 @@ jobs:
             elif [[ "${GITHUB_REF}" == "refs/heads/release" ]]; then
               COMMIT_ID=$(echo "${GITHUB_SHA}" | cut -c1-6)
               export PACKAGE_ID="nexus-git-1.0.0-release-${COMMIT_ID}"
-              export PACKAGE_VERSION="1.0.0-release-${COMMIT_ID}"
+              export PACKAGE_VERSION="1.0.0"
             elif [[ "${GITHUB_REF}" == "refs/heads/master" ]]; then
               exit 1
             fi 
