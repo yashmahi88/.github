@@ -84,7 +84,30 @@ jobs:
         with:
           name: nuget-package
           path: ./artifact
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifact
+          path: ./downloaded-artifacts
+  
+      - name: Verify contents of downloaded artifact
+        run: |
+          echo "Listing contents of downloaded artifacts:"
+          ls -R ./downloaded-artifacts
+          cat ./downloaded-artifacts/package_info.txt
+  
+      - name: Extract PACKAGE_ID and PACKAGE_VERSION
+        run: |
+            PACKAGE_ID=$(grep "PACKAGE_ID:" ./downloaded-artifacts/package_info.txt | cut -d ':' -f2 | xargs)
+            PACKAGE_VERSION=$(grep "PACKAGE_VERSION:" ./downloaded-artifacts/package_info.txt | cut -d ':' -f2 | xargs)
+  
+            echo "PACKAGE_ID=${PACKAGE_ID}"
+            echo "PACKAGE_VERSION=${PACKAGE_VERSION}"
+  
+            echo "PACKAGE_ID=${PACKAGE_ID}" >> $GITHUB_ENV
+            echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
 
+            
       - name: List files in artifact directory
         run: ls -al ./artifact/
 
