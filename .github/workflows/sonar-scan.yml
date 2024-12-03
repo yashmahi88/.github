@@ -46,17 +46,23 @@ jobs:
         if: ${{ inputs.LANGUAGE == 'node' || inputs.LANGUAGE == 'react' }}
         run: |
           sleep 5
-          PROJECT_KEY="${{ inputs.PROJECT_KEY }}"
+          PROJECT_KEY=$(echo "yashmahi88_node-code" | tr -d '[:space:]')
           QUALITY_GATE_STATUS=$(curl -s -H "Authorization: Bearer ${{ secrets.SONAR_TOKEN }}" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${PROJECT_KEY}")
           echo "Quality Gate Status Response: $QUALITY_GATE_STATUS"
+
           PROJECT_STATUS=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.status')
           ALL_CONDITIONS_OK=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.conditions | all(.status == "OK")')
+
+          echo "Project Status: $PROJECT_STATUS"
+          echo "All Conditions OK: $ALL_CONDITIONS_OK"
+
           if [[ "$PROJECT_STATUS" != "OK" || "$ALL_CONDITIONS_OK" != "true" ]]; then
             echo "Quality Gate failed. Stopping the workflow."
             exit 1
           else
             echo "Quality Gate passed."
           fi
+
 
       # Java Sonar Scan
       - name: Set up JDK for Java
