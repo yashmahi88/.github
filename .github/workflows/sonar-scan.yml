@@ -111,7 +111,7 @@ jobs:
         shell: bash
         run: |
           sleep 5
-          PROJECT_KEY="${{ inputs.PROJECT_KEY}}
+          PROJECT_KEY="${{ inputs.PROJECT_KEY}}"
           QUALITY_GATE_STATUS=$(curl -s -H "Authorization: Bearer ${{ secrets.SONAR_TOKEN }}" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${PROJECT_KEY}")
           echo "Quality Gate Status Response: $QUALITY_GATE_STATUS"
           PROJECT_STATUS=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.status')
