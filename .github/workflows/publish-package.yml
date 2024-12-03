@@ -11,10 +11,7 @@ on:
 jobs:
   package:
     runs-on: ubuntu-latest
-    env:
-      PACKAGE_ID: ""
-      PACKAGE_VERSION: ""
-      ARTIFACT_PATH: ""
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -49,10 +46,9 @@ jobs:
             dotnet pack --configuration Release --output ./bin/Release /p:CustomPackageId=$PACKAGE_ID /p:PackageVersion=$PACKAGE_VERSION
             ARTIFACT_PATH="./bin/Release/${PACKAGE_ID}.${PACKAGE_VERSION}.nupkg"
           elif [[ "${{ inputs.LANGUAGE }}" == "java" ]]; then
-                mvn package \
-                -DartifactId=${{ env.PACKAGE_ID }} \
-                -Dversion=${{ env.PACKAGE_VERSION }} \
-                -Durl=${{ secrets.NEXUS_URL }}
+            mvn package \
+              -Dpackage.id=${{ env.PACKAGE_ID }} \
+              -Dpackage.version=${{ env.PACKAGE_VERSION }}
             ARTIFACT_PATH="./target/${PACKAGE_ID}-${PACKAGE_VERSION}.jar"
           elif [[ "${{ inputs.LANGUAGE }}" == "react" || "${{ inputs.LANGUAGE }}" == "node" ]]; then
             node -e "
