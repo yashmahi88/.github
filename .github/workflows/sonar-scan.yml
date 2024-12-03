@@ -1,66 +1,64 @@
-name: Sonar Scan
+name: Reusable SonarQube Cloud Scan
 
 on:
   workflow_call:
     inputs:
-      project_key:
+      LANGUAGE:
+        description: 'Programming LANGUAGE (node, react, java, dotnet)'
         required: true
         type: string
-      project_name:
+      PROJECT_KEY:
         required: true
         type: string
+      PROJECT_ORG:
+        required: true
+        type: string
+    secrets:
+      SONAR_TOKEN:
+        required: true
+      TOKEN_GIT:
+        required: true
 
 jobs:
-  sonar_scan:
-    runs-on: windows-latest
+  sonarcloud:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            LANGUAGE-group: node-react
+          - os: ubuntu-latest
+            LANGUAGE-group: java
+          - os: windows-latest
+            LANGUAGE-group: dotnet
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
         with:
-          java-version: 17
-          distribution: 'zulu'
+          fetch-depth: 0
 
-      - name: Cache SonarQube Cloud packages
-        uses: actions/cache@v4
-        with:
-          path: ~\sonar\cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
-
-      - name: Cache SonarQube Cloud scanner
-        id: cache-sonar-scanner
-        uses: actions/cache@v4
-        with:
-          path: .\.sonar\scanner
-          key: ${{ runner.os }}-sonar-scanner
-          restore-keys: ${{ runner.os }}-sonar-scanner
-
-      - name: Install SonarQube Cloud scanner
-        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
-        shell: powershell
+      - name: Set up SonarQube Scanner for Node/React
+        if: ${{ inputs.LANGUAGE == 'node' || inputs.LANGUAGE == 'react' }}
         run: |
-          New-Item -Path .\.sonar\scanner -ItemType Directory
-          dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
-
-      - name: Build and analyze
+            echo "sonar.projectKey=${{ inputs.PROJECT_KEY }}" >> sonar-project.properties
+            echo "sonar.organization=${{ inputs.PROJECT_ORG }}" >> sonar-project.properties
+            cat sonar-project.properties
+      # Node/React Sonar Scan
+      - name: SonarQube Scan for Node/React
+        if: ${{ inputs.LANGUAGE == 'node' || inputs.LANGUAGE == 'react' }}
+        uses: SonarSource/sonarcloud-github-action@master
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
+          TOKEN_GIT: ${{ secrets.TOKEN_GIT }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        shell: powershell
+      - name: Check Quality Gate for Node/React
+        if: ${{ inputs.LANGUAGE == 'node' || inputs.LANGUAGE == 'react' }}
         run: |
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"${{ vars.PROJECT_KEY }}" /o:"${{ vars.PROJECT_NAME }}" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
-          dotnet build
-          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
-
-      - name: Check Quality Gate
-        run: |
-          sleep 5  
-          QUALITY_GATE_STATUS=$(curl -s -H "Authorization: Bearer ${{ secrets.SONAR_TOKEN }}" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ inputs.project_key }}")           
-          echo "Quality Gate Status Response: $QUALITY_GATE_STATUS"           
-          PROJECT_STATUS=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.status')            
+          sleep 5
+          PROJECT_KEY="${{ inputs.PROJECT_KEY }}"
+          QUALITY_GATE_STATUS=$(curl -s -H "Authorization: Bearer ${{ secrets.SONAR_TOKEN }}" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${PROJECT_KEY}")
+          echo "Quality Gate Status Response: $QUALITY_GATE_STATUS"
+          PROJECT_STATUS=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.status')
           ALL_CONDITIONS_OK=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.conditions | all(.status == "OK")')
           if [[ "$PROJECT_STATUS" != "OK" || "$ALL_CONDITIONS_OK" != "true" ]]; then
             echo "Quality Gate failed. Stopping the workflow."
@@ -68,5 +66,61 @@ jobs:
           else
             echo "Quality Gate passed."
           fi
-        shell: bash
- 
+
+      # Java Sonar Scan
+      - name: Set up JDK for Java
+        if: ${{ inputs.LANGUAGE == 'java' }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: zulu
+      - name: Build and Analyze Java
+        if: ${{ inputs.LANGUAGE == 'java' }}
+        run: |
+          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=yashmahi88_java_project
+        env:
+          TOKEN_GIT: ${{ secrets.TOKEN_GIT }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Check Quality Gate for Java
+        if: ${{ inputs.LANGUAGE == 'java' }}
+        run: |
+          sleep 5
+          PROJECT_KEY="yashmahi88_java_project"
+          QUALITY_GATE_STATUS=$(curl -s -H "Authorization: Bearer ${{ secrets.SONAR_TOKEN }}" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${PROJECT_KEY}")
+          echo "Quality Gate Status Response: $QUALITY_GATE_STATUS"
+          PROJECT_STATUS=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.status')
+          ALL_CONDITIONS_OK=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.conditions | all(.status == "OK")')
+          if [[ "$PROJECT_STATUS" != "OK" || "$ALL_CONDITIONS_OK" != "true" ]]; then
+            echo "Quality Gate failed. Stopping the workflow."
+            exit 1
+          else
+            echo "Quality Gate passed."
+          fi
+
+      # Dotnet Sonar Scan
+      - name: Set up Dotnet Environment for Dotnet
+        if: ${{ inputs.LANGUAGE == 'dotnet' }}
+        shell: pwsh
+        run: dotnet tool install --global dotnet-sonarscanner
+      - name: Build and Analyze Dotnet
+        if: ${{ inputs.LANGUAGE == 'dotnet' }}
+        shell: pwsh
+        run: |
+          dotnet-sonarscanner begin /k:"yashmahi88_dotnet_project" /o:"yashmahi0404" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+          dotnet build
+          dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+      - name: Check Quality Gate for Dotnet
+        if: ${{ inputs.LANGUAGE == 'dotnet' }}
+        shell: pwsh
+        run: |
+          sleep 5
+          PROJECT_KEY="yashmahi88_dotnet_project"
+          QUALITY_GATE_STATUS=$(curl -s -H "Authorization: Bearer ${{ secrets.SONAR_TOKEN }}" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${PROJECT_KEY}")
+          echo "Quality Gate Status Response: $QUALITY_GATE_STATUS"
+          PROJECT_STATUS=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.status')
+          if ($PROJECT_STATUS -ne "OK") {
+            Write-Host "Quality Gate failed. Stopping the workflow."
+            exit 1
+          } else {
+            Write-Host "Quality Gate passed."
+          }
