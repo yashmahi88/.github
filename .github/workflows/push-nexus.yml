@@ -45,7 +45,7 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           echo "Logging in to Nexus..."
-          echo "//52.187.94.85:8081/repository/npm-tag/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+          echo "//52.187.94.85:8081/repository/npm-tag/:_authToken=${{ secrets.NPM_TOKEN }}>> ~/.npmrc
           echo "always-auth=true" >> ~/.npmrc
 
       - name: Push to Nexus Repository (Tag)
@@ -87,10 +87,10 @@ jobs:
           echo "Logging in to Nexus..."          
           
           if [[ "${GITHUB_REF}" == "refs/heads/development" ]]; then
-            echo "//52.187.94.85:8081/repository/npm-snapshot/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+            echo "//52.187.94.85:8081/repository/npm-snapshot/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
             echo "Using NPM_TOKEN for development"
           elif [[ "${GITHUB_REF}" == "refs/heads/release" ]]; then
-            echo "//52.187.94.85:8081/repository/npm-snapshot/:_authToken=${NPM_TOKEN }" >> ~/.npmrc
+            echo "//52.187.94.85:8081/repository/npm-snapshot/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
             echo "Using NPM_TOKEN for release"
           fi
       
