@@ -108,7 +108,7 @@ jobs:
           dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
       - name: Check Quality Gate for Dotnet
         if: ${{ inputs.LANGUAGE == 'dotnet' }}
-        shell: pwsh
+        shell: bash
         run: |
           sleep 5
           PROJECT_KEY="${{ inputs.PROJECT_KEY}}
