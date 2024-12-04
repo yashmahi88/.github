@@ -132,6 +132,8 @@ jobs:
 
       - name: Push to Nexus Repository (Branch)
         env:
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
           NEXUS_DEV_SOURCE: ${{ secrets.NEXUS_DEV_SOURCE }}
           NEXUS_RELEASE_SOURCE: ${{ secrets.NEXUS_RELEASE_SOURCE }}
           LANGUAGE: ${{ inputs.LANGUAGE }}
