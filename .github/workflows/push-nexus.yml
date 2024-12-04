@@ -143,8 +143,8 @@ jobs:
             NEXUS_SOURCE=$NEXUS_RELEASE_SOURCE
             echo "NEXUS_SOURCE=$NEXUS_RELEASE_SOURCE" >> $GITHUB_ENV
           fi
-          echo "export NEXUS_USERNAME=${{ secrets.NEXUS_USERNAME }}" >> $GITHUB_ENV
-          echo "export NEXUS_PASSWORD=${{ secrets.NEXUS_PASSWORD }}" >> $GITHUB_ENV
+          echo "NEXUS_USERNAME=${{ secrets.NEXUS_USERNAME }}" >> $GITHUB_ENV
+          echo "NEXUS_PASSWORD=${{ secrets.NEXUS_PASSWORD }}" >> $GITHUB_ENV
 
           echo "Pushing to Nexus repository: $NEXUS_SOURCE"
           if [[ "$LANGUAGE" == "java" ]]; then
