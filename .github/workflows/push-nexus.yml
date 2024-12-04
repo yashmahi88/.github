@@ -151,10 +151,10 @@ jobs:
           echo "Deploying artifact with the following details:"
           echo "PACKAGE_ID: ${PACKAGE_ID}"
           echo "PACKAGE_VERSION: ${PACKAGE_VERSION}"
-            # mvn deploy:deploy-file -Dfile=./artifact/$(basename $(ls ./artifact/*.jar)) -DgroupId=com.example -DartifactId=$PACKAGE_ID -Dversion=$PACKAGE_VERSION -Dpackage.id=$PACKAGE_ID -Dpackage.version=$PACKAGE_VERSION -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
-            curl -v -u "$NEXUS_USERNAME:$NEXUS_PASSWORD" \
-               --upload-file ./artifact/$(basename $(ls ./artifact/*.jar)) \
-               "$NEXUS_SOURCE"   #/com/example/$PACKAGE_ID/$PACKAGE_VERSION/$(basename $(ls ./artifact/*.jar))"
+            mvn deploy:deploy-file -Dfile=./artifact/$(basename $(ls ./artifact/*.jar)) -DgroupId=com.example -DartifactId=$PACKAGE_ID -Dversion=$PACKAGE_VERSION -Dpackage.id=$PACKAGE_ID -Dpackage.version=$PACKAGE_VERSION -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
+            # curl -v -u "$NEXUS_USERNAME:$NEXUS_PASSWORD" \
+            #    --upload-file ./artifact/$(basename $(ls ./artifact/*.jar)) \
+            #    "$NEXUS_SOURCE"   # /com/example/$PACKAGE_ID/$PACKAGE_VERSION/$(basename $(ls ./artifact/*.jar))"
 
           elif [[ "$LANGUAGE" == "dotnet" ]]; then
             dotnet nuget push ./artifact/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
