@@ -151,7 +151,7 @@ jobs:
           echo "Deploying artifact with the following details:"
           echo "PACKAGE_ID: ${PACKAGE_ID}"
           echo "PACKAGE_VERSION: ${PACKAGE_VERSION}"
-            mvn deploy:deploy-file -Dfile=./artifact/$(basename $(ls ./artifact/*.jar)) -DgroupId=com.example -DartifactId=$PACKAGE_ID -Dversion=$PACKAGE_VERSION -Dpackage.id=$PACKAGE_ID -Dpackage.version=$PACKAGE_VERSION -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=${{ secrets.NEXUS_USERNAME }} -Dpassword=${{ secrets.NEXUS_PASSWORD }}
+            mvn deploy:deploy-file -Dfile=./artifact/$(basename $(ls ./artifact/*.jar)) -DgroupId=com.example -DartifactId=$PACKAGE_ID -Dversion=$PACKAGE_VERSION -Dpackage.id=$PACKAGE_ID -Dpackage.version=$PACKAGE_VERSION -Dpackaging=jar -DrepositoryId=nexus -Durl=$NEXUS_SOURCE -Dusername=$NEXUS_USERNAME -Dpassword=$NEXUS_PASSWORD
           elif [[ "$LANGUAGE" == "dotnet" ]]; then
             dotnet nuget push ./artifact/*.nupkg --source $NEXUS_SOURCE --api-key $NEXUS_API_KEY
           elif [[ "$LANGUAGE" == "node" ]]; then
