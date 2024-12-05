@@ -65,22 +65,21 @@ jobs:
 
 
       # Java Sonar Scan
-      - name: Extract PACKAGE_ID and PACKAGE_VERSION
-        run: |
-          PACKAGE_ID=$(grep "PACKAGE_ID:" ./downloaded-artifacts/package_info.txt | cut -d ':' -f2 | xargs)
-          PACKAGE_VERSION=$(grep "PACKAGE_VERSION:" ./downloaded-artifacts/package_info.txt | cut -d ':' -f2 | xargs)
-
-          echo "PACKAGE_ID=${PACKAGE_ID}"
-          echo "PACKAGE_VERSION=${PACKAGE_VERSION}"
-
-          echo "PACKAGE_ID=${PACKAGE_ID}" >> $GITHUB_ENV
-          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
-
       - name: Download Artifact
         uses: actions/download-artifact@v3
         with:
           name: build-artifact
           path: ./downloaded-artifacts
+      - name: Extract PACKAGE_ID and PACKAGE_VERSION
+        run: |
+          PACKAGE_ID=$(grep "PACKAGE_ID:" ./downloaded-artifacts/package_info.txt | cut -d ':' -f2 | xargs)
+          PACKAGE_VERSION=$(grep "PACKAGE_VERSION:" ./downloaded-artifacts/package_info.txt | cut -d ':' -f2 | xargs)
+  
+          echo "PACKAGE_ID=${PACKAGE_ID}"
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}"
+  
+          echo "PACKAGE_ID=${PACKAGE_ID}" >> $GITHUB_ENV
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
 
       - name: Set up JDK for Java
         if: ${{ inputs.LANGUAGE == 'java' }}
