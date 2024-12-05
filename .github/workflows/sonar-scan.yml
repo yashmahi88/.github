@@ -92,7 +92,8 @@ jobs:
         run: |
           echo "PACKAGE_ID: ${PACKAGE_ID}"
           echo "PACKAGE_VERSION: ${PACKAGE_VERSION}"
-          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey= ${{  inputs.PROJECT_KEY }} -Dsonar.organization= ${{  inputs.PROJECT_ORG }} -DartifactId=$PACKAGE_ID -Dversion=$PACKAGE_VERSION -Dpackage.id=$PACKAGE_ID -Dpackage.version=$PACKAGE_VERSION 
+          PROJECT_KEY=${{  inputs.PROJECT_KEY }}
+          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=${{  inputs.PROJECT_KEY }} -Dsonar.organization=${{  inputs.PROJECT_ORG }} -DartifactId=$PACKAGE_ID -Dversion=$PACKAGE_VERSION -Dpackage.id=$PACKAGE_ID -Dpackage.version=$PACKAGE_VERSION 
         env:
           TOKEN_GIT: ${{ secrets.TOKEN_GIT }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
