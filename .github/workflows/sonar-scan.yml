@@ -102,7 +102,9 @@ jobs:
         run: |
           sleep 5
           PROJECT_KEY=${{  inputs.PROJECT_KEY }}
-          QUALITY_GATE_STATUS=$(curl -s -H "Authorization: Bearer ${{ secrets.SONAR_TOKEN }}" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${PROJECT_KEY}")
+          CURRENT_BRANCH=$(echo "${GITHUB_REF}" | sed 's/refs\/heads\///')
+          echo "${CURRENT_BRANCH}"
+          QUALITY_GATE_STATUS=$(curl -s -H "Authorization: Bearer ${{ secrets.SONAR_TOKEN }}" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${PROJECT_KEY}&branch=${CURRENT_BRANCH}")
           echo "Quality Gate Status Response: $QUALITY_GATE_STATUS"
           PROJECT_STATUS=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.status')
           ALL_CONDITIONS_OK=$(echo "$QUALITY_GATE_STATUS" | jq -r '.projectStatus.conditions | all(.status == "OK")')
