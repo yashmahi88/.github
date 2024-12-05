@@ -65,6 +65,23 @@ jobs:
 
 
       # Java Sonar Scan
+      - name: Extract PACKAGE_ID and PACKAGE_VERSION
+        run: |
+          PACKAGE_ID=$(grep "PACKAGE_ID:" ./downloaded-artifacts/package_info.txt | cut -d ':' -f2 | xargs)
+          PACKAGE_VERSION=$(grep "PACKAGE_VERSION:" ./downloaded-artifacts/package_info.txt | cut -d ':' -f2 | xargs)
+
+          echo "PACKAGE_ID=${PACKAGE_ID}"
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}"
+
+          echo "PACKAGE_ID=${PACKAGE_ID}" >> $GITHUB_ENV
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifact
+          path: ./downloaded-artifacts
+
       - name: Set up JDK for Java
         if: ${{ inputs.LANGUAGE == 'java' }}
         uses: actions/setup-java@v4
@@ -74,7 +91,7 @@ jobs:
       - name: Build and Analyze Java
         if: ${{ inputs.LANGUAGE == 'java' }}
         run: |
-          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey= ${{  inputs.PROJECT_KEY }}
+          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey= ${{  inputs.PROJECT_KEY }} -Dsonar.organization= ${{  inputs.PROJECT_ORG }} -DartifactId=$PACKAGE_ID -Dversion=$PACKAGE_VERSION -Dpackage.id=$PACKAGE_ID -Dpackage.version=$PACKAGE_VERSION 
         env:
           TOKEN_GIT: ${{ secrets.TOKEN_GIT }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
